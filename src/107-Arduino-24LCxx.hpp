@@ -67,8 +67,20 @@ public:
 
   size_t fill_page(uint16_t const mem_addr, uint8_t const val)
   {
-    std::array<uint8_t, page_size()> const fill_buf{val};
-    return write_page(mem_addr, fill_buf.data(), page_size());
+    while (!isEepromReady()) yield();
+
+    /* Write memory page address. */
+    _wire_begin(_dev_addr);
+    writeMemoryAddress(mem_addr);
+
+    /* Write memory page data. */
+    size_t bytes_written = 0;
+    for(bytes_written = 0; bytes_written < page_size(); bytes_written++)
+      _wire_write(val);
+
+    _wire_end();
+
+    return bytes_written;
   }
 
   size_t write_page(uint16_t const mem_addr, uint8_t const * data, size_t const num_bytes)
