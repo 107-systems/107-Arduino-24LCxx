@@ -6,6 +6,12 @@
  */
 
 /**************************************************************************************
+ * INCLUDE
+ **************************************************************************************/
+
+#include <array>
+
+/**************************************************************************************
  * TYPEDEF
  **************************************************************************************/
 
@@ -57,6 +63,12 @@ public:
     char msg_buf[64] = {0};
     snprintf(msg_buf, sizeof(msg_buf), "%s:\n\r\tdev  size: %5d\n\r\tpage size: %5d", device_name(), page_size(), device_size());
     return p.write(msg_buf);
+  }
+
+  size_t fill_page(uint16_t const mem_addr, uint8_t const val)
+  {
+    std::array<uint8_t, page_size()> const fill_buf{val};
+    return write_page(mem_addr, fill_buf.data(), page_size());
   }
 
   size_t write_page(uint16_t const mem_addr, uint8_t const * data, size_t const num_bytes)
