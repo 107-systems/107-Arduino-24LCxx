@@ -11,6 +11,11 @@ on:
       - ".github/workflows/compile-examples.yml"
       - "examples/**"
       - "src/**"
+  schedule:
+    # Run every Tuesday at 8 AM UTC to catch breakage caused by changes to external resources (libraries, platforms).
+    - cron: "0 8 * * TUE"
+  workflow_dispatch:
+  repository_dispatch:
 
 jobs:
   build:
@@ -28,24 +33,24 @@ jobs:
             platforms: |
               - name: rp2040:rp2040
                 source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+            artifact-name-suffix: rp2040-rp2040-rpipico
           - fqbn: rp2040:rp2040:arduino_nano_connect
             platforms: |
               - name: rp2040:rp2040
                 source-url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+            artifact-name-suffix: rp2040-rp2040-arduino_nano_connect
           - fqbn: arduino:renesas_portenta:portenta_c33
             platforms: |
               - name: arduino:renesas_portenta
+            artifact-name-suffix: arduino-renesas_portenta-portenta_c33
           - fqbn: arduino:renesas_uno:minima
             platforms: |
               - name: arduino:renesas_uno
+            artifact-name-suffix: arduino-renesas_uno-minima
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install ESP32 platform dependencies
-        if: startsWith(matrix.board.fqbn, 'esp32:esp32')
-        run: pip3 install pyserial
 
       - name: Compile examples
         uses: arduino/compile-sketches@main
@@ -56,9 +61,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           sketches-report-path: ${{ env.SKETCHES_REPORTS_PATH }}
 
-      - name: Save memory usage change report as artifact
-        if: github.event_name == 'pull_request'
+      - name: Save sketches report as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.SKETCHES_REPORTS_PATH }}
+          if-no-files-found: error
           path: ${{ env.SKETCHES_REPORTS_PATH }}
+          name: sketches-report-${{ matrix.board.artifact-name-suffix }}
